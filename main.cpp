@@ -2,11 +2,12 @@
 #include <ctime>
 #include <cstdlib>
 
-
+enum class Side { LEFT, RIGHT, NONE };
 
 
 int main()
 {
+
     srand((int)time(0));
 
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Timber!");
@@ -20,6 +21,11 @@ int main()
     textureBee.loadFromFile("graphics/bee.png");
     sf::Texture textureCloud;
     textureCloud.loadFromFile("graphics/cloud.png");
+    sf::Texture texturePlayer;
+    texturePlayer.loadFromFile("graphics/player.png");
+    sf::Texture textureBranch;
+    textureBranch.loadFromFile("graphics/branch.png");
+
 
     sf::Sprite spriteBackground;
     spriteBackground.setTexture(textureBackground);
@@ -27,6 +33,7 @@ int main()
     spriteTree.setTexture(textureTree);
     sf::Sprite spriteBee;
     spriteBee.setTexture(textureBee);
+    
 
 
     sf::Sprite spriteCloud[3];
@@ -35,6 +42,30 @@ int main()
     {
         spriteCloud[i].setTexture(textureCloud);
     }
+    sf::Sprite spritePlayer;
+    spritePlayer.setTexture(texturePlayer);
+    spritePlayer.setOrigin(texturePlayer.getSize().x * -2.f, texturePlayer.getSize().y );
+    spritePlayer.setPosition(1920 * 0.5f, 950.f);
+
+
+
+    const int NUM_BRANCHES = 6;
+    sf::Sprite spriteBranch[NUM_BRANCHES];
+    Side sideBranch[NUM_BRANCHES] = { Side::LEFT, Side::RIGHT, Side::NONE, Side::LEFT, Side::RIGHT, Side::NONE };
+    Side sidePlayer = Side::LEFT;
+
+
+    for (int i = 0; i < NUM_BRANCHES; ++i)
+    {
+        spriteBranch[i].setTexture(textureBranch);
+        spriteBranch[i].setOrigin(textureTree.getSize().x * -0.5f, 0.f);
+        spriteBranch[i].setPosition(1920.f * 0.5f, i * 150.f);
+    }
+
+
+
+
+
 
     float cloudY[3];
 
@@ -54,6 +85,7 @@ int main()
     sf::Vector2f beeDirection = { 1.f, 0.f };
     float beeSpeed = 200.f;
     float beerandom = (float)rand() / RAND_MAX;
+
     if (beerandom > 0.5)
     {
         beeDirection.x = 1.f;
@@ -127,7 +159,7 @@ int main()
             pos_C1 += cloudDirection[i] * cloudspeed[i] * deltaTime;
             spriteCloud[i].setPosition(pos_C1);
 
-            if (pos_C1.x < -800 || pos_C1.x > 1920 + 800)
+            if (pos_C1.x < -400 || pos_C1.x > 1920 + 400)
             {
                 float cloud1random = (float)rand() / RAND_MAX;
                 if (cloud1random < 0.5f)
@@ -166,6 +198,35 @@ int main()
                 beeSpeed = rand() % 200 + 100;
             }
 
+            for (int i = 0; i < NUM_BRANCHES; i++)
+            {
+                switch (sideBranch[i])
+                {
+                case Side::LEFT:
+                    spriteBranch[i].setScale(-1.f, 1.f);
+                    break;
+                case Side::RIGHT:
+                    spriteBranch[i].setScale(1.f, 1.f);
+                    break;
+                }
+
+
+            }
+           
+            switch (sidePlayer)
+            {
+            case Side::LEFT:
+                spritePlayer.setScale(-1.f, 1.f);
+                break;
+            case Side::RIGHT:
+                spritePlayer.setScale(1.f, 1.f);
+                break;
+            }
+
+            
+
+
+
 
 
 
@@ -178,9 +239,19 @@ int main()
             }
 
             window.draw(spriteTree);
+            for (int i = 0; i < NUM_BRANCHES; ++i)
+            {
+                if (sideBranch[i] != Side::NONE)
+                {
+                    window.draw(spriteBranch[i]);
+                }
+
+
+            }
             window.draw(spriteBee);
+            window.draw(spritePlayer);
             window.display();
-        
+                    
     }
         
  }
