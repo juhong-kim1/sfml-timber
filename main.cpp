@@ -3,6 +3,30 @@
 #include <cstdlib>
 
 enum class Side { LEFT, RIGHT, NONE };
+int enterCount = 0;
+
+void updateBranches(Side* branches, int size)
+{
+    for (int i = size - 1; i >= 1; i--)
+    {
+        branches[i] = branches[i - 1];
+    }
+    int r = rand() % 3;
+    switch (r)
+    {
+    case 0:
+        branches[0] = Side::LEFT;
+        break;
+    case 1:
+        branches[0] = Side::RIGHT;
+        break;
+    case 2:
+        branches[0] = Side::NONE;
+        break;
+    }
+}
+
+
 
 
 int main()
@@ -25,34 +49,102 @@ int main()
     texturePlayer.loadFromFile("graphics/player.png");
     sf::Texture textureBranch;
     textureBranch.loadFromFile("graphics/branch.png");
+    sf::Texture textureAxe;
+    textureAxe.loadFromFile("graphics/axe.png");
 
 
     sf::Sprite spriteBackground;
     spriteBackground.setTexture(textureBackground);
     sf::Sprite spriteTree;
     spriteTree.setTexture(textureTree);
-    sf::Sprite spriteBee;
-    spriteBee.setTexture(textureBee);
+    sf::Sprite spriteAxe;
+    spriteAxe.setTexture(textureAxe);
+
+
     
+    int cloudCount = 3;
+    const int NUM_BACKGOROUND= 4;
+    sf::Sprite spriteBackgroundElements[NUM_BACKGOROUND];
+    sf::Vector2f directionElements[NUM_BACKGOROUND];
+    float speedElements[NUM_BACKGOROUND];
 
 
-    sf::Sprite spriteCloud[3];
 
-    for (int i = 0;i < 3; i++)
+
+    for (int i = 0 ; i < NUM_BACKGOROUND; i++)
     {
-        spriteCloud[i].setTexture(textureCloud);
+        if (i < cloudCount)
+        {
+            spriteBackgroundElements[i].setTexture(textureCloud);
+            directionElements[i] = { 1.f, 0.f };
+            speedElements[i] = rand() % 200 + 100;
+            float cloud1random = (float)rand() / RAND_MAX;
+            if (cloud1random > 0.5)
+            {
+                directionElements[i].x = 1.f;
+                spriteBackgroundElements[i].setScale(-1.f, 1.f);
+                spriteBackgroundElements[i].setPosition(-150, rand() % 300 + 100);
+            }
+            else
+            {
+                directionElements[i].x = -1.f;
+                spriteBackgroundElements[i].setScale(1.f, 1.f);
+                spriteBackgroundElements[i].setPosition(1920 + 150, rand() % 300 + 10);
+            }
+           
+        }
+        else
+        {
+            spriteBackgroundElements[i].setTexture(textureBee);
+            directionElements[i] = { 1.f, 0.f };
+            speedElements[i] = rand() % 200 + 100;
+            float beerandom = (float)rand() / RAND_MAX;
+
+            if (beerandom > 0.5)
+            {
+                directionElements[i].x = 1.f;
+                spriteBackgroundElements[i].setScale(-1.f, 1.f);
+                spriteBackgroundElements[i].setPosition(-150, 750);
+            }
+            else
+            {
+                directionElements[i].x = -1.f;
+                spriteBackgroundElements[i].setScale(-1.f, 1.f);
+                spriteBackgroundElements[i].setPosition(-150, 750);
+            }
+        }
+
     }
     sf::Sprite spritePlayer;
     spritePlayer.setTexture(texturePlayer);
     spritePlayer.setOrigin(texturePlayer.getSize().x * -2.f, texturePlayer.getSize().y );
     spritePlayer.setPosition(1920 * 0.5f, 950.f);
 
+    spriteAxe.setOrigin(texturePlayer.getSize().x * -1.1f, texturePlayer.getSize().y);
+    spriteAxe.setPosition(1920 * 0.5f, 1060);
+
+   
+
 
 
     const int NUM_BRANCHES = 6;
     sf::Sprite spriteBranch[NUM_BRANCHES];
-    Side sideBranch[NUM_BRANCHES] = { Side::LEFT, Side::RIGHT, Side::NONE, Side::LEFT, Side::RIGHT, Side::NONE };
-    Side sidePlayer = Side::LEFT;
+    Side sideBranch[NUM_BRANCHES];
+    Side sidePlayer = Side::RIGHT;
+    Side sideAxe=Side::RIGHT;
+
+    switch (sidePlayer)
+    {
+    case Side::LEFT:
+        spritePlayer.setScale(-1.f, 1.f);
+        spriteAxe.setScale(-1.f, 1.f);
+        break;
+    case Side::RIGHT:
+        spritePlayer.setScale(1.f, 1.f);
+        spriteAxe.setScale(1.f, 1.f);
+        break;
+    }
+
 
 
     for (int i = 0; i < NUM_BRANCHES; ++i)
@@ -60,172 +152,252 @@ int main()
         spriteBranch[i].setTexture(textureBranch);
         spriteBranch[i].setOrigin(textureTree.getSize().x * -0.5f, 0.f);
         spriteBranch[i].setPosition(1920.f * 0.5f, i * 150.f);
+
+        int r = rand() % 3;
+        switch (r)
+        {
+        case 0:
+            sideBranch[i] = Side::LEFT;
+            break;
+        case 1:
+            sideBranch[i] = Side::RIGHT;
+            break;
+        case 2:
+            sideBranch[i] = Side::NONE;
+            break;
+        }
+    
+
     }
-
-
-
-
-
-
-    float cloudY[3];
-
-    cloudY[0] = 0;
-    cloudY[1] = textureCloud.getSize().y;
-    cloudY[2] = textureCloud.getSize().y * 2;
-
+    sideBranch[NUM_BRANCHES - 1] = Side::NONE;
 
     spriteTree.setPosition(1920 * 0.5f - textureTree.getSize().x * 0.5f, 0);
-    spriteCloud[0].setPosition(960, 0);
-    spriteCloud[1].setPosition(960, 0 + textureCloud.getSize().y);
-    spriteCloud[2].setPosition(960, 0 + textureCloud.getSize().y * 2);
-    spriteBee.setPosition(960, 750);
-
-
-
-    sf::Vector2f beeDirection = { 1.f, 0.f };
-    float beeSpeed = 200.f;
-    float beerandom = (float)rand() / RAND_MAX;
-
-    if (beerandom > 0.5)
-    {
-        beeDirection.x = 1.f;
-        spriteBee.setScale(-1.f, 1.f);
-    }
-    else
-    {
-        beeDirection.x = -1.f;
-        spriteBee.setScale(1.f, 1.f);
-    }
-    beeSpeed = rand() % 200 + 100;
-
-    sf::Vector2f cloudDirection[3];
-    for (int i = 0; i < 3; i++)
-    {
-        cloudDirection[i] = { 1.f, 0.f };
-    }
-
-    float cloudspeed[3];
-    for (int i = 0; i < 3; i++)
-    {
-        cloudspeed[i] = 200.f;
-    }
-
-
-    for (int i = 0; i < 3; i++)
-    {
-  
-        float cloud1random = (float)rand() / RAND_MAX;
-        if (cloud1random > 0.5)
-        {
-            cloudDirection[i].x = 1.f;
-            spriteCloud[i].setScale(-1.f, 1.f);
-        }
-        else
-        {
-            cloudDirection[i].x = -1.f;
-            spriteCloud[i].setScale(1.f, 1.f);
-        }
-        cloudspeed[i] = rand() % 200 + 100;
-    }
+    spriteBackgroundElements[0].setPosition(960, 0);
+    spriteBackgroundElements[1].setPosition(960, 0 + textureCloud.getSize().y);
+    spriteBackgroundElements[2].setPosition(960, 0 + textureCloud.getSize().y * 2);
 
 
 
     sf::Clock clock;
 
+    bool isLeft = false;
+    bool isRight = false;
+    bool iscrash = false;
+    bool keyPressed = false;
+    bool isPlaying = true;
+    bool isPressEnter = false;
+
+    
     while (window.isOpen())
     {
-        sf::Time time = clock.restart();
-        float deltaTime = time.asSeconds();
 
-        printf("%f\n", deltaTime);
-
-
-        // 이벤트 루프
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
-
-        // 업데이트
-        sf::Vector2f pos = spriteBee.getPosition();
-        pos += beeDirection * beeSpeed * deltaTime;
-        spriteBee.setPosition(pos);
-
-        for (int i = 0; i < 3; i++)
-        {
-            sf::Vector2f pos_C1 = spriteCloud[i].getPosition();
-            pos_C1 += cloudDirection[i] * cloudspeed[i] * deltaTime;
-            spriteCloud[i].setPosition(pos_C1);
-
-            if (pos_C1.x < -400 || pos_C1.x > 1920 + 400)
-            {
-                float cloud1random = (float)rand() / RAND_MAX;
-                if (cloud1random < 0.5f)
-                {
-                    cloudDirection[i].x = 1.f;
-                    spriteCloud[i].setScale(-1.f, 1.f);
-                    spriteCloud[i].setPosition(0 - 100, 0 + cloudY[i]);
-                   
-                }
-                else
-                {
-                    cloudDirection[i].x = -1.f;
-                    spriteCloud[i].setScale(1.f, 1.f);
-                    spriteCloud[i].setPosition(1920 + 100, 0 + cloudY[i]);
-                }
-                cloudspeed[i] = rand() % 200 + 100;
-
-            }
-        }
-
-            if (pos.x < -200 || pos.x > 1920 + 200)
-            {
-                float beerandom = (float)rand() / RAND_MAX;
-                if (beerandom < 0.5f)
-                {
-                    beeDirection.x = 1.f;
-                    spriteBee.setScale(-1.f, 1.f);
-                    spriteBee.setPosition(0 - 150, 750);
-                }
-                else
-                {
-                    beeDirection.x = -1.f;
-                    spriteBee.setScale(1.f, 1.f);
-                    spriteBee.setPosition(1920 + 150, 750);
-                }
-                beeSpeed = rand() % 200 + 100;
-            }
-
-            for (int i = 0; i < NUM_BRANCHES; i++)
-            {
-                switch (sideBranch[i])
-                {
-                case Side::LEFT:
-                    spriteBranch[i].setScale(-1.f, 1.f);
-                    break;
-                case Side::RIGHT:
-                    spriteBranch[i].setScale(1.f, 1.f);
-                    break;
-                }
-
-
-            }
-           
-            switch (sidePlayer)
-            {
-            case Side::LEFT:
-                spritePlayer.setScale(-1.f, 1.f);
-                break;
-            case Side::RIGHT:
-                spritePlayer.setScale(1.f, 1.f);
-                break;
-            }
-
+        
+            sf::Time time = clock.restart();
+            float deltaTime = time.asSeconds();
+            sf::Keyboard::Enter;
+          
             
+                // printf("%f\n", deltaTime);
+                bool isLeftUp = false;
+                bool isRightUp = false;
+                bool isLeftDown = false;
+                bool isRightDown = false;
+
+                // 이벤트 루프
+                sf::Event event;
+                while (window.pollEvent(event))
+                {
+
+                    switch (event.type)
+                    {
+                    case sf::Event::Closed:
+                        window.close();
+                        break;
+                    case sf::Event::KeyPressed:
+                        switch (event.key.code)
+                        {
+                        case sf::Keyboard::Left:
 
 
+                            if (!isLeft)
+                            {
+                                isLeftDown = true;
+
+                            }
+                            isLeft = true;
+                            keyPressed = true;
+
+                            break;
+                        case sf::Keyboard::Right:
+
+                            if (!isRight)
+                            {
+                                isRightDown = true;
+                            }
+                            isRight = true;
+                            keyPressed = true;
+
+
+                            break;
+                        }
+                        break;
+                    case sf::Event::KeyReleased:
+                        switch (event.key.code)
+                        {
+                        case sf::Keyboard::Left:
+                            isLeft = false;
+                            isLeftUp = true;
+                            keyPressed = false;
+
+                            break;
+                        case sf::Keyboard::Right:
+                            isRight = false;
+                            isRightUp = true;
+                            keyPressed = false;
+                            break;
+                        }
+                        break;
+
+                    }
+
+                }
+
+                if (isPlaying == true)
+                {
+
+                    // 업데이트
+                    if (isRightDown || isLeftDown)
+                    {
+                        if (isLeftDown)
+                        {
+                            sidePlayer = Side::LEFT;
+                        }
+                        if (isRightDown)
+                        {
+                            sidePlayer = Side::RIGHT;
+                        }
+                        updateBranches(sideBranch, NUM_BRANCHES);
+
+                    }
+
+
+
+
+
+                    for (int i = 0; i < NUM_BACKGOROUND; ++i)
+                    {
+                        if (cloudCount < 3)
+                        {
+                            sf::Vector2f position = spriteBackgroundElements[i].getPosition();
+                            position += directionElements[i] * speedElements[i] * deltaTime;
+                            spriteBackgroundElements[i].setPosition(position);
+                            if (position.x < -200 || position.x > 1920 + 200)
+                            {
+                                float random = (float)rand() / RAND_MAX;
+                                if (random < 0.5f)
+                                {
+                                    directionElements[i].x = 1.f;
+                                    spriteBackgroundElements[i].setScale(-1.f, 1.f);
+                                    spriteBackgroundElements[i].setPosition(0 - 150, rand() % 300 + 100);
+                                }
+                                else
+                                {
+                                    directionElements[i].x = -1.f;
+                                    spriteBackgroundElements[i].setScale(1.f, 1.f);
+                                    spriteBackgroundElements[i].setPosition(1920 + 150, rand() % 300 + 100);
+                                }
+                                speedElements[i] = rand() % 200 + 100;
+
+                            }
+
+                        }
+                        else
+                        {
+                            sf::Vector2f position = spriteBackgroundElements[i].getPosition();
+                            position += directionElements[i] * speedElements[i] * deltaTime;
+                            spriteBackgroundElements[i].setPosition(position);
+                            if (position.x < -200 || position.x > 1920 + 200)
+                            {
+                                float random = (float)rand() / RAND_MAX;
+                                if (random < 0.5f)
+                                {
+                                    directionElements[i].x = 1.f;
+                                    spriteBackgroundElements[i].setScale(-1.f, 1.f);
+                                    spriteBackgroundElements[i].setPosition(0 - 150, 750);
+                                }
+                                else
+                                {
+                                    directionElements[i].x = -1.f;
+                                    spriteBackgroundElements[i].setScale(1.f, 1.f);
+                                    spriteBackgroundElements[i].setPosition(1920 + 150, 750);
+                                }
+                                speedElements[i] = rand() % 200 + 100;
+
+                            }
+                        }
+
+
+
+                    }
+
+                    for (int i = 0; i < NUM_BRANCHES; i++)
+                    {
+                        switch (sideBranch[i])
+                        {
+                        case Side::LEFT:
+                            spriteBranch[i].setScale(-1.f, 1.f);
+                            break;
+                        case Side::RIGHT:
+                            spriteBranch[i].setScale(1.f, 1.f);
+                            break;
+                        }
+
+
+                    }
+
+                    switch (sidePlayer)
+                    {
+                    case Side::LEFT:
+                        spritePlayer.setScale(-1.f, 1.f);
+                        spriteAxe.setScale(-1.f, 1.f);
+                        break;
+                    case Side::RIGHT:
+                        spritePlayer.setScale(1.f, 1.f);
+                        spriteAxe.setScale(1.f, 1.f);
+                        break;
+                    }
+
+
+                    if (sideBranch[NUM_BRANCHES-1] == sidePlayer)
+                    {
+                        if (!iscrash)
+                        {
+                            printf("Ouch!");
+                            isPlaying = false;
+                            iscrash = true;
+
+                        }
+                   
+                    }
+
+                }
+         
+                if (event.key.code == sf::Keyboard::Enter)
+                {
+                    enterCount++;
+
+                   if (event.key.code == sf::Keyboard::Enter && !isPlaying)
+                    {
+                       enterCount++;
+                       if (enterCount >= 2)
+                       {
+                           isPlaying = true;
+                           iscrash = false;
+                           enterCount = 0;
+                       }
+                    }
+                }
+              
 
 
 
@@ -233,9 +405,9 @@ int main()
             // 그리기
             window.clear();
             window.draw(spriteBackground);
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < NUM_BACKGOROUND; i++)
             {
-                window.draw(spriteCloud[i]);
+                window.draw(spriteBackgroundElements[i]);
             }
 
             window.draw(spriteTree);
@@ -248,9 +420,20 @@ int main()
 
 
             }
-            window.draw(spriteBee);
+            window.draw(spriteBackgroundElements[3]);
             window.draw(spritePlayer);
+          
+
+            if (keyPressed == true)
+            {
+                window.draw(spriteAxe);
+            }
+
+
+
+
             window.display();
+
                     
     }
         
