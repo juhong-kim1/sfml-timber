@@ -386,10 +386,10 @@ int main()
                 {
                     enterCount++;
 
-                   if (event.key.code == sf::Keyboard::Enter && !isPlaying)
+                   if (event.key.code == sf::Keyboard::Enter)
                     {
                        enterCount++;
-                       if (enterCount >= 2)
+                       if (enterCount == 2)
                        {
                            isPlaying = true;
                            iscrash = false;
