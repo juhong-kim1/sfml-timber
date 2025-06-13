@@ -1,9 +1,10 @@
 #include <SFML/Graphics.hpp>
 #include <ctime>
 #include <cstdlib>
+#include <SFML/Audio.hpp>
 
 enum class Side { LEFT, RIGHT, NONE };
-int enterCount = 0;
+
 
 void updateBranches(Side* branches, int size)
 {
@@ -25,6 +26,8 @@ void updateBranches(Side* branches, int size)
         break;
     }
 }
+
+
 
 
 
@@ -54,6 +57,18 @@ int main()
     sf::Font font;
     font.loadFromFile("fonts/KOMIKAP_.ttf");
 
+    sf::SoundBuffer bufferChop;
+    bufferChop.loadFromFile("sound/chop.wav");
+    sf::SoundBuffer bufferDeath;
+    bufferDeath.loadFromFile("sound/death.wav");
+    sf::SoundBuffer bufferOutOfTime;
+    bufferOutOfTime.loadFromFile("sound/out_of_time.wav");
+
+    sf::Texture texturelog;
+    texturelog.loadFromFile("graphics/log.png");
+
+
+
 
 
     sf::Sprite spriteBackground;
@@ -64,9 +79,9 @@ int main()
     spriteAxe.setTexture(textureAxe);
 
 
-    
+
     int cloudCount = 3;
-    const int NUM_BACKGOROUND= 4;
+    const int NUM_BACKGOROUND = 4;
     sf::Sprite spriteBackgroundElements[NUM_BACKGOROUND];
     sf::Vector2f directionElements[NUM_BACKGOROUND];
     float speedElements[NUM_BACKGOROUND];
@@ -74,7 +89,7 @@ int main()
 
 
 
-    for (int i = 0 ; i < NUM_BACKGOROUND; i++)
+    for (int i = 0; i < NUM_BACKGOROUND; i++)
     {
         if (i < cloudCount)
         {
@@ -94,7 +109,7 @@ int main()
                 spriteBackgroundElements[i].setScale(1.f, 1.f);
                 spriteBackgroundElements[i].setPosition(1920 + 150, rand() % 300 + 10);
             }
-           
+
         }
         else
         {
@@ -120,21 +135,22 @@ int main()
     }
     sf::Sprite spritePlayer;
     spritePlayer.setTexture(texturePlayer);
-    spritePlayer.setOrigin(texturePlayer.getSize().x * -2.f, texturePlayer.getSize().y );
+    spritePlayer.setOrigin(texturePlayer.getSize().x * -2.f, texturePlayer.getSize().y);
     spritePlayer.setPosition(1920 * 0.5f, 950.f);
 
     spriteAxe.setOrigin(texturePlayer.getSize().x * -1.1f, texturePlayer.getSize().y);
     spriteAxe.setPosition(1920 * 0.5f, 1060);
 
-   
+
 
 
 
     const int NUM_BRANCHES = 6;
     sf::Sprite spriteBranch[NUM_BRANCHES];
     Side sideBranch[NUM_BRANCHES];
+
     Side sidePlayer = Side::RIGHT;
-    Side sideAxe=Side::RIGHT;
+    Side sideAxe = Side::RIGHT;
 
     switch (sidePlayer)
     {
@@ -169,7 +185,7 @@ int main()
             sideBranch[i] = Side::NONE;
             break;
         }
-    
+
 
     }
     sideBranch[NUM_BRANCHES - 1] = Side::NONE;
@@ -178,6 +194,34 @@ int main()
     spriteBackgroundElements[0].setPosition(960, 0);
     spriteBackgroundElements[1].setPosition(960, 0 + textureCloud.getSize().y);
     spriteBackgroundElements[2].setPosition(960, 0 + textureCloud.getSize().y * 2);
+
+
+
+    const int NUM_LOGS = 10;
+    sf::Sprite testLog[NUM_LOGS];                                                        /////////////testlog 부분
+    bool isActiveTestLog[NUM_LOGS];
+    sf::Vector2f testLogVelocity[NUM_LOGS];
+    sf::Vector2f testLogDirection = { 1.f, -1.f };
+    float testLogSpeed = 2000.f;
+    sf::Vector2f gravity = { 0.f, 6000.f };
+    sf::Vector2f testLogDirectionRight = { -1.f, -1.f };
+
+    for (int i = 0; i < NUM_LOGS; i++)
+    {
+        testLog[i].setTexture(texturelog);
+        testLog[i].setOrigin(texturelog.getSize().x * 0.5f, texturelog.getSize().y);
+        sf::Vector2f logInitPosition = spriteTree.getPosition();
+        logInitPosition.y = textureTree.getSize().y;
+        testLog[i].setPosition(960, 900);
+        isActiveTestLog[i] = false;
+        testLogVelocity[i] = testLogDirection * testLogSpeed;
+
+    }
+
+    int logIndex = 0;
+    
+  
+
 
 
     //UI
@@ -217,6 +261,17 @@ int main()
     timeBar.setPosition(1920 * 0.5f - timeBarWidth * 0.5f, 1000.f - 100.f);
 
 
+    sf::Sound soundChop;
+    soundChop.setBuffer(bufferChop);
+
+    sf::Sound soundDeath;
+    soundDeath.setBuffer(bufferDeath);
+
+    sf::Sound soundOutOfTime;
+    soundOutOfTime.setBuffer(bufferOutOfTime);
+
+
+
 
     //게임데이터
     int score = 0;
@@ -230,17 +285,11 @@ int main()
 
     bool isLeft = false;
     bool isRight = false;
-    bool isCrash = false;
     bool keyPressed = false;
-    bool isPressEnter = false;
-    int isStartCount = 0;
-    bool isStart = true;
 
     
     while (window.isOpen())
     {
-
-        
             sf::Time time = clock.restart();
             float deltaTime = time.asSeconds();
             sf::Keyboard::Enter;
@@ -351,7 +400,7 @@ int main()
                         messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
                         messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
                         textMessage.setOrigin(messageOrigin);
-
+                        soundOutOfTime.play();
                     }
                     timeBar.setSize({timeBarSpeed * remaingTime, timeBarHeight});
 
@@ -366,15 +415,49 @@ int main()
                     // 업데이트
                     if (isRightDown || isLeftDown)
                     {
+
+                   
+
+
+
                         if (isLeftDown)
                         {
                             sidePlayer = Side::LEFT;
+                            isActiveTestLog[logIndex] = true;
+                            testLog[logIndex].setPosition(920, 900);
+                            testLogVelocity[logIndex] = testLogDirection * testLogSpeed;
+
+                            if (logIndex < NUM_LOGS)
+                            {
+                                logIndex = (logIndex + 1);
+                            }
+                            if (logIndex == NUM_LOGS)
+                            {
+                                logIndex = 0;
+                            }
+                           
                         }
                         if (isRightDown)
                         {
                             sidePlayer = Side::RIGHT;
+                            isActiveTestLog[logIndex] = true;
+                            testLog[logIndex].setPosition(920, 900);
+                            testLogVelocity[logIndex] = testLogDirectionRight * testLogSpeed;
+
+                            if (logIndex < NUM_LOGS)
+                            {
+                                logIndex = (logIndex + 1);
+                            }
+                            if (logIndex == NUM_LOGS)
+                            {
+                                logIndex = 0;
+                            }
                         }
                         updateBranches(sideBranch, NUM_BRANCHES);
+                 
+
+
+
                         if (sidePlayer == sideBranch[NUM_BRANCHES - 1])
                         {
                             printf("충돌!\n");
@@ -387,11 +470,13 @@ int main()
                             messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
                             messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
                             textMessage.setOrigin(messageOrigin);
+                            soundDeath.play();
                         }
                         else
                         {
                             score += 10;
                             textScore.setString("SCORE: " + std::to_string(score));
+                            soundChop.play();
                         }
 
                     }
@@ -485,6 +570,16 @@ int main()
 
 
 
+                    if (isActiveTestLog)                                               //////////////////테스트로그 동작부분
+                    {
+                        for (int i = 0; i < NUM_LOGS; i++)
+                        {
+                            testLogVelocity[i] += gravity * deltaTime;
+                            sf::Vector2f position = testLog[i].getPosition();
+                            position += testLogVelocity[i] * deltaTime;
+                            testLog[i].setPosition(position);
+                        }
+                    }
 
 
 
@@ -505,6 +600,13 @@ int main()
             }
 
             window.draw(spriteTree);
+           
+            for (int i = 0; i < NUM_LOGS; ++i)
+            {
+                window.draw(testLog[i]);
+            }
+         
+
             for (int i = 0; i < NUM_BRANCHES; ++i)
             {
                 if (sideBranch[i] != Side::NONE)
@@ -514,13 +616,17 @@ int main()
 
 
             }
+
+
             window.draw(spriteBackgroundElements[3]);
             window.draw(spritePlayer);
           
 
-            if (isLeft || isRight && !isPlaying)
+            if ((isLeft || isRight) && isPlaying)
             {
-                window.draw(spriteAxe);
+   
+                    window.draw(spriteAxe);
+             
             }
 
 
@@ -540,3 +646,4 @@ int main()
     }
         
  }
+ 
