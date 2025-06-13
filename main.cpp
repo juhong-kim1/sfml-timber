@@ -51,6 +51,9 @@ int main()
     textureBranch.loadFromFile("graphics/branch.png");
     sf::Texture textureAxe;
     textureAxe.loadFromFile("graphics/axe.png");
+    sf::Font font;
+    font.loadFromFile("fonts/KOMIKAP_.ttf");
+
 
 
     sf::Sprite spriteBackground;
@@ -171,10 +174,55 @@ int main()
     }
     sideBranch[NUM_BRANCHES - 1] = Side::NONE;
 
-    spriteTree.setPosition(1920 * 0.5f - textureTree.getSize().x * 0.5f, 0);
+    spriteTree.setPosition(1920 * 0.5f - textureTree.getSize().x * 0.5f, -50);
     spriteBackgroundElements[0].setPosition(960, 0);
     spriteBackgroundElements[1].setPosition(960, 0 + textureCloud.getSize().y);
     spriteBackgroundElements[2].setPosition(960, 0 + textureCloud.getSize().y * 2);
+
+
+    //UI
+    sf::Text textScore;
+    textScore.setFont(font);
+    textScore.setString("SCORE: 0");
+    textScore.setCharacterSize(100);
+    textScore.setFillColor(sf::Color::White);
+    textScore.setPosition(20,20);
+
+
+
+
+
+
+    sf::Text textMessage;
+    textMessage.setFont(font);
+    textMessage.setString("Press Enter to Start!");
+    textMessage.setCharacterSize(50);
+    textMessage.setFillColor(sf::Color::Yellow);
+    sf::Vector2f messageOrigin;
+    messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
+    messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
+    textMessage.setOrigin(messageOrigin);
+    textMessage.setPosition(1920 * 0.5f, 1080 * 0.5f);
+ 
+
+
+
+
+
+    sf::RectangleShape timeBar;
+    float timeBarWidth = 400;
+    float timeBarHeight = 80;
+    timeBar.setSize({ timeBarWidth, timeBarHeight });
+    timeBar.setFillColor(sf::Color::Red);
+    timeBar.setPosition(1920 * 0.5f - timeBarWidth * 0.5f, 1000.f - 100.f);
+
+
+
+    //게임데이터
+    int score = 0;
+    float timeBarSpeed = timeBarWidth / 5.f;
+    float remaingTime = 5.f;
+    bool isPlaying = false;
 
 
 
@@ -182,10 +230,11 @@ int main()
 
     bool isLeft = false;
     bool isRight = false;
-    bool iscrash = false;
+    bool isCrash = false;
     bool keyPressed = false;
-    bool isPlaying = true;
     bool isPressEnter = false;
+    int isStartCount = 0;
+    bool isStart = true;
 
     
     while (window.isOpen())
@@ -255,15 +304,64 @@ int main()
                             isRightUp = true;
                             keyPressed = false;
                             break;
+                        case sf::Keyboard::Return:
+                            isPlaying = !isPlaying;
+                            if (!isPlaying)
+                            {
+                                textMessage.setString("Press Enter to Resume");
+                                textMessage.setFillColor(sf::Color::Red);
+                                sf::Vector2f messageOrigin;
+                                messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
+                                messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
+                                textMessage.setOrigin(messageOrigin);
+
+                            }
+                            else if (remaingTime == 0.f || sidePlayer == sideBranch[NUM_BRANCHES - 1])
+                            {
+                                score = 0;
+                                textScore.setString("SCORE: 0");
+                                remaingTime = 5.f;
+                                sideBranch[NUM_BRANCHES - 1] = Side::NONE;
+
+                            }
+
+
+
+
                         }
+               
+
                         break;
 
                     }
 
                 }
 
-                if (isPlaying == true)
+                if (isPlaying)
                 {
+
+                    remaingTime -= deltaTime;
+                    if (remaingTime < 0.f)
+                    {
+                        remaingTime = 0.f;
+                        isPlaying = false;
+                        textMessage.setString("Press Enter to Restart");
+                        textMessage.setFillColor(sf::Color::Blue);
+                        sf::Vector2f messageOrigin;
+                        messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
+                        messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
+                        textMessage.setOrigin(messageOrigin);
+
+                    }
+                    timeBar.setSize({timeBarSpeed * remaingTime, timeBarHeight});
+
+
+
+                    sf::Vector2f timeBarSize = timeBar.getSize();
+                    timeBarSize.x -= timeBarSpeed * deltaTime;
+                    timeBar.setSize(timeBarSize);
+
+
 
                     // 업데이트
                     if (isRightDown || isLeftDown)
@@ -277,6 +375,24 @@ int main()
                             sidePlayer = Side::RIGHT;
                         }
                         updateBranches(sideBranch, NUM_BRANCHES);
+                        if (sidePlayer == sideBranch[NUM_BRANCHES - 1])
+                        {
+                            printf("충돌!\n");
+                            score = 0;
+                            textScore.setString("SCORE: " + std::to_string(score));
+                            isPlaying = false;
+                            textMessage.setString("Press Enter to Restart");
+                            textMessage.setFillColor(sf::Color::Blue);
+                            sf::Vector2f messageOrigin;
+                            messageOrigin.x = textMessage.getLocalBounds().width * 0.5f;
+                            messageOrigin.y = textMessage.getLocalBounds().height * 0.5f;
+                            textMessage.setOrigin(messageOrigin);
+                        }
+                        else
+                        {
+                            score += 10;
+                            textScore.setString("SCORE: " + std::to_string(score));
+                        }
 
                     }
 
@@ -368,42 +484,20 @@ int main()
                     }
 
 
-                    if (sideBranch[NUM_BRANCHES-1] == sidePlayer)
-                    {
-                        if (!iscrash)
-                        {
-                            printf("Ouch!");
-                            isPlaying = false;
-                            iscrash = true;
 
-                        }
-                   
-                    }
+
+
+
+    
+
 
                 }
-         
-                if (event.key.code == sf::Keyboard::Enter)
-                {
-                    enterCount++;
-
-                   if (event.key.code == sf::Keyboard::Enter)
-                    {
-                       enterCount++;
-                       if (enterCount == 2)
-                       {
-                           isPlaying = true;
-                           iscrash = false;
-                           enterCount = 0;
-                       }
-                    }
-                }
-              
-
-
 
 
             // 그리기
             window.clear();
+
+            //WORLD
             window.draw(spriteBackground);
             for (int i = 0; i < NUM_BACKGOROUND; i++)
             {
@@ -424,13 +518,21 @@ int main()
             window.draw(spritePlayer);
           
 
-            if (keyPressed == true)
+            if (isLeft || isRight && !isPlaying)
             {
                 window.draw(spriteAxe);
             }
 
 
 
+            //UI
+            window.draw(textScore);
+            window.draw(timeBar);
+
+            if (!isPlaying)
+            {
+                window.draw(textMessage);
+            }
 
             window.display();
 
